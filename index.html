@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ErikaDCF — 스토리로 배우는 가치평가</title>
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ["ui-sans-serif","system-ui","-apple-system","Noto Sans KR","Inter"] },
+          colors: { brand:"#3B82F6", ink:"#111827", mute:"#6B7280", line:"#E5E7EB", bubble:"#F9FAFB" },
+          borderRadius: { xl:"12px" }
+        }
+      }
+    }
+  </script>
+  <style>
+    .speech::after{
+      content:""; position:absolute; left:24px; bottom:-10px;
+      border-width:10px 10px 0 10px; border-style:solid;
+      border-color:#F3F4F6 transparent transparent transparent;
+      filter: drop-shadow(0 1px 0 #E5E7EB);
+    }
+  </style>
+</head>
+<body class="bg-white font-sans text-ink">
+  <!-- Header -->
+  <header class="w-full border-b border-line">
+    <div class="mx-auto max-w-[1200px] px-4 py-4 flex items-center justify-between">
+      <div class="text-xl font-extrabold">ErikaDCF</div>
+      <div class="flex items-center gap-2">
+        <button class="h-9 px-3 rounded-xl border border-line text-sm">KOR / ENG</button>
+        <span class="text-sm text-mute">교육용 데모</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="mx-auto max-w-[1200px] px-4 py-8">
+    <h1 class="text-2xl md:text-3xl font-extrabold">스토리로 배우는 가치평가</h1>
+    <p class="text-mute mt-2">스토리를 적고, 가정치를 입력하거나 자동 시연으로 계산하세요. 나중에 API만 붙이면 바로 실서비스로 확장 가능합니다.</p>
+  </section>
+
+  <!-- Main -->
+  <main class="mx-auto max-w-[1200px] px-4 pb-14 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Left: Form -->
+    <section class="space-y-4">
+      <label class="block text-sm text-mute">스토리 입력</label>
+      <textarea id="story" rows="8" class="w-full rounded-xl border border-line p-3 outline-none focus:ring-2 focus:ring-brand"
+        placeholder="예) AI 서버 수요 확대로 5년 고성장. 믹스 개선으로 마진 상승. CAPEX 점진 하락, WACC 9% 가정."></textarea>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm text-mute mb-1">시장가격(선택)</label>
+          <input id="market" type="number" value="100" class="w-full rounded-xl border border-line p-2 outline-none focus:ring-2 focus:ring-brand">
+        </div>
+        <div class="flex items-end gap-2">
+          <button id="autoBtn" class="h-10 flex-1 rounded-xl border border-line">자동 시연 가정치</button>
+          <button id="resetBtn" class="h-10 px-3 rounded-xl border border-line">초기화</button>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-line p-3">
+        <div class="text-sm text-mute mb-2">가정치 (수동 입력)</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-xs text-mute mb-1">성장률(CAGR)</label>
+            <input id="growth" type="number" step="0.001" value="0.08" class="w-full rounded-xl border border-line p-2">
+            <div class="text-[11px] text-mute mt-1">0.00~0.60</div>
+          </div>
+          <div>
+            <label class="block text-xs text-mute mb-1">영업이익률</label>
+            <input id="margin" type="number" step="0.001" value="0.23" class="w-full rounded-xl border border-line p-2">
+            <div class="text-[11px] text-mute mt-1">0.00~0.60</div>
+          </div>
+          <div>
+            <label class="block text-xs text-mute mb-1">WACC</label>
+            <input id="wacc" type="number" step="0.001" value="0.09" class="w-full rounded-xl border border-line p-2">
+            <div class="text-[11px] text-mute mt-1">0.03~0.25</div>
+          </div>
+          <div>
+            <label class="block text-xs text-mute mb-1">CAPEX/매출</label>
+            <input id="capex" type="number" step="0.001" value="0.05" class="w-full rounded-xl border border-line p-2">
+            <div class="text-[11px] text-mute mt-1">0.00~0.30</div>
+          </div>
+        </div>
+      </div>
+
+      <button id="calcBtn" class="h-12 w-full rounded-xl bg-brand text-white font-semibold hover:opacity-90 transition">DCF 계산하기</button>
+      <p class="text-xs text-mute">본 서비스는 투자자문이 아닌 교육용 시뮬레이션입니다. 실제 투자 판단에 사용하지 마십시오.</p>
+    </section>
+
+    <!-- Right: Erika -->
+    <aside class="flex flex-col items-center gap-4">
+      <!-- 에리카 이미지: assets/erika.png가 있으면 사용, 없으면 임시 이미지 -->
+      <img id="erikaImg" src="assets/erika.png" alt="Erika" class="rounded-xl shadow-sm w-full max-w-[420px]"
+           onerror="this.onerror=null;this.src='https://picsum.photos/seed/erika/420/560';">
+      <div class="relative w-full max-w-[420px] rounded-xl border border-line bg-bubble p-4 speech">
+        <p id="bubble" class="text-sm">스토리는 자유롭게, 숫자는 냉정하게. 가정을 준비하겠습니다, 마스터.</p>
+      </div>
+    </aside>
+
+    <!-- Results -->
+    <section id="results" class="lg:col-span-2 hidden">
+      <h2 class="text-xl font-bold mb-4">결과</h2>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <div class="rounded-xl border border-line p-3">
+          <div class="text-xs text-mute">성장률(CAGR)</div>
+          <div id="kpi-growth" class="text-xl font-bold">-</div>
+        </div>
+        <div class="rounded-xl border border-line p-3">
+          <div class="text-xs text-mute">영업이익률</div>
+          <div id="kpi-margin" class="text-xl font-bold">-</div>
+        </div>
+        <div class="rounded-xl border border-line p-3">
+          <div class="text-xs text-mute">WACC</div>
+          <div id="kpi-wacc" class="text-xl font-bold">-</div>
+        </div>
+        <div class="rounded-xl border border-line p-3">
+          <div class="text-xs text-mute">CAPEX/매출</div>
+          <div id="kpi-capex" class="text-xl font-bold">-</div>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-line p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="text-sm text-mute mb-1">추정 현재가치 (Fair Value)</div>
+          <div id="fair" class="text-2xl font-extrabold">-</div>
+        </div>
+        <div class="flex-1">
+          <div class="w-full h-3 bg-[#F3F4F6] rounded-xl overflow-hidden">
+            <div id="bar-fair" class="h-3 bg-brand" style="width:0%"></div>
+          </div>
+          <div class="mt-2 w-full h-3 bg-[#F3F4F6] rounded-xl overflow-hidden">
+            <div id="bar-market" class="h-3 bg-[#94A3B8]" style="width:0%"></div>
+          </div>
+          <div class="mt-1 text-xs text-mute">상단: 현재가치 / 하단: 시장가격</div>
+        </div>
+      </div>
+
+      <div class="mt-4 relative rounded-xl border border-line bg-bubble p-4 speech">
+        <p id="comment" class="text-sm">결과가 준비되면 코멘트가 여기에 표시됩니다.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="border-t border-line">
+    <div class="mx-auto max-w-[1200px] px-4 py-4 text-xs text-mute">© ErikaDCF — 교육용 데모</div>
+  </footer>
+
+  <script>
+    const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
+    const pct=(v)=> (v*100).toFixed(1)+"%";
+
+    function dcf(g, m, w, c, init=100, years=5, tg=0.02){
+      let pv=0, lastFCFF=0;
+      for(let t=1;t<=years;t++){
+        const revenue = init*Math.pow(1+g,t);
+        const op = revenue*m;
+        const fcff = op - (revenue*c);
+        lastFCFF = fcff;
+        pv += fcff/Math.pow(1+w,t);
+      }
+      if(w<=tg) tg = Math.min(0.019, w-0.001);
+      const tv = lastFCFF*(1+tg)/(w-tg);
+      pv += tv/Math.pow(1+w,years);
+      return Math.round(pv*100)/100;
+    }
+
+    // 자동 시연 가정치
+    document.getElementById("autoBtn").addEventListener("click",(e)=>{
+      e.preventDefault();
+      const growth = clamp(0.05+Math.random()*0.08, 0.00, 0.60);
+      const margin = clamp(0.18+Math.random()*0.10, 0.00, 0.60);
+      const wacc   = clamp(0.08+Math.random()*0.03, 0.03, 0.25);
+      const capex  = clamp(0.04+Math.random()*0.03, 0.00, 0.30);
+      document.getElementById("growth").value = growth.toFixed(3);
+      document.getElementById("margin").value = margin.toFixed(3);
+      document.getElementById("wacc").value   = wacc.toFixed(3);
+      document.getElementById("capex").value  = capex.toFixed(3);
+      document.getElementById("bubble").textContent = "자동 시연 가정치로 설정했습니다. 계산을 진행하죠, 마스터.";
+    });
+
+    // 초기화
+    document.getElementById("resetBtn").addEventListener("click",(e)=>{
+      e.preventDefault();
+      document.getElementById("growth").value = "0.08";
+      document.getElementById("margin").value = "0.23";
+      document.getElementById("wacc").value   = "0.09";
+      document.getElementById("capex").value  = "0.05";
+      document.getElementById("bubble").textContent = "기본 가정치로 초기화했습니다.";
+    });
+
+    // 계산
+    document.getElementById("calcBtn").addEventListener("click",(e)=>{
+      e.preventDefault();
+      const market = parseFloat(document.getElementById("market").value || "100");
+      const growth = clamp(parseFloat(document.getElementById("growth").value||"0"), 0.00, 0.60);
+      const margin = clamp(parseFloat(document.getElementById("margin").value||"0"), 0.00, 0.60);
+      const wacc   = clamp(parseFloat(document.getElementById("wacc").value||"0"),   0.03, 0.25);
+      const capex  = clamp(parseFloat(document.getElementById("capex").value||"0"),  0.00, 0.30);
+
+      const fair = dcf(growth, margin, wacc, capex);
+
+      document.getElementById("kpi-growth").textContent = pct(growth);
+      document.getElementById("kpi-margin").textContent = pct(margin);
+      document.getElementById("kpi-wacc").textContent   = pct(wacc);
+      document.getElementById("kpi-capex").textContent  = pct(capex);
+      document.getElementById("fair").textContent = fair.toLocaleString();
+
+      const maxBar = Math.max(fair, market, 1);
+      document.getElementById("bar-fair").style.width   = (fair/maxBar*100)+"%";
+      document.getElementById("bar-market").style.width = (market/maxBar*100)+"%";
+
+      const comment = fair>market
+        ? "현재가치가 시장가보다 높습니다. 저평가 구간입니다, 마스터."
+        : "시장가격이 더 높습니다. 성장 가정이 과도할 수 있어요.";
+      document.getElementById("comment").textContent = comment;
+
+      document.getElementById("bubble").textContent = "계산을 완료했습니다. 결과를 확인하세요, 마스터.";
+      document.getElementById("results").classList.remove("hidden");
+      window.scrollTo({ top: document.getElementById("results").offsetTop - 20, behavior: "smooth" });
+    });
+  </script>
+</body>
+</html>
